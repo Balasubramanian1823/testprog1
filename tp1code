@@ -1,0 +1,18 @@
+    LOC 6                        ; Start at location 6
+    Data 10                      ; Store 10 at location 6
+    Data 3                       ; Store 3 at location 7
+    Data End                     ; Label for jump
+    Data 0                       ; Store 0 at location 9
+    Data 12                      ; Store 12 at location 10
+    Data 18                      ; Store 18 at location 11
+    Data 12                      ; Store 12 at location 12
+    
+    LDX 2,7                      ; X2 gets the value 3 from location 7
+    LDR 3,0,10                   ; R3 gets 12 from location 10
+    LDR 2,2,10                   ; R2 gets 12 from location 10 using X2
+    LDR 1,2,10,1                 ; R1 gets 18 from location 10 plus offset
+    LDA 0,0,0                    ; R0 gets 0 to set condition code
+    LDX 1,8                      ; X1 gets 1024 from location 8
+    JZ 0,1,0                     ; Jump to End if R0 equals 0
+    
+End: HLT                         ; Stop the program
