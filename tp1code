@@ -1,18 +1,60 @@
-    LOC 6                        ; Start at location 6
-    Data 10                      ; Store 10 at location 6
-    Data 3                       ; Store 3 at location 7
-    Data End                     ; Label for jump
-    Data 0                       ; Store 0 at location 9
-    Data 12                      ; Store 12 at location 10
-    Data 18                      ; Store 18 at location 11
-    Data 12                      ; Store 12 at location 12
+LOC 100                          ; Start at memory location 100
+
+; Data Section
+Data  65535                      ; Placeholder max number for initializing closest difference
+Data  20                         ; Total count of numbers to read
+Data  0                          ; Placeholder for the user number (USERNUM)
+Data  0                          ; Placeholder for closest number (CLOSEST)
+
+; Number Inputs (to be entered from keyboard)
+NUMBERS: .BLOCK 40               ; Space for 20 numbers (20 * 2 bytes = 40 bytes)
+
+; Start Program
+LDX  1, NUMBERS                  ; Load the base address of NUMBERS array into IXR1
+LDA  0, 0                        ; Initialize GPR0 (loop counter)
+
+READ_LOOP:
+    IN 0, 1                      ; Read number from user into GPR0
+    STR 0, 0(1)                  ; Store the number in the NUMBERS array
+    INC 1                        ; Move IXR1 to the next memory location
+    INC 0                        ; Increment loop counter (R0)
+    CMP 0, 20                    ; Compare the loop counter with 20
+    JZ  FIND_CLOSEST             ; If all numbers are read, jump to FIND_CLOSEST
+    JMP READ_LOOP                ; Otherwise, continue reading numbers
+
+FIND_CLOSEST:
+    IN 1, 0                      ; Read the target number (USERNUM) into GPR1
+    STR 1, 102                   ; Store the input number in memory
+
+    ; Initialize closest search
+    LDX 1, NUMBERS               ; Reload the base address of NUMBERS into IXR1
+    LDR 2, 0(1)                  ; Load the first number into GPR2
+    SUB 3, 2, 1                  ; Calculate difference (number - user input)
+    ABS 3                        ; Get absolute difference
+    STR 3, 100                   ; Store difference in memory
+    STR 2, 103                   ; Assume first number is closest
+
+    LDA 0, 1                     ; Set loop counter to 1 (second number)
     
-    LDX 2,7                      ; X2 gets the value 3 from location 7
-    LDR 3,0,10                   ; R3 gets 12 from location 10
-    LDR 2,2,10                   ; R2 gets 12 from location 10 using X2
-    LDR 1,2,10,1                 ; R1 gets 18 from location 10 plus offset
-    LDA 0,0,0                    ; R0 gets 0 to set condition code
-    LDX 1,8                      ; X1 gets 1024 from location 8
-    JZ 0,1,0                     ; Jump to End if R0 equals 0
-    
-End: HLT                         ; Stop the program
+SEARCH_LOOP:
+    INC 1                        ; Move IXR1 to the next number
+    LDR 2, 0(1)                  ; Load the next number into GPR2
+    SUB 3, 2, 1                  ; Calculate difference (number - user input)
+    ABS 3                        ; Get absolute difference
+    LDR 4, 100                   ; Load the current minimum difference
+    CMP 3, 4                     ; Compare current difference with minimum difference
+    JGE SKIP_UPDATE              ; If greater or equal, skip updating
+    STR 3, 100                   ; Update minimum difference
+    STR 2, 103                   ; Update closest number
+
+SKIP_UPDATE:
+    INC 0                        ; Increment loop counter
+    CMP 0, 20                    ; Compare loop counter with 20
+    JZ  PRINT_CLOSEST            ; If all 20 numbers are checked, jump to PRINT_CLOSEST
+    JMP SEARCH_LOOP              ; Otherwise, continue searching
+
+PRINT_CLOSEST:
+    OUT 102                      ; Print the user input
+    OUT 103                      ; Print the closest number
+    HLT                          ; Stop the program
+
