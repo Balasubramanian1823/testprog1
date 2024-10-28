@@ -1,60 +1,57 @@
-LOC 100                          ; Start at memory location 100
+    LOC 100                    ; Start at memory location 100
 
 ; Data Section
-Data  65535                      ; Placeholder max number for initializing closest difference
-Data  20                         ; Total count of numbers to read
-Data  0                          ; Placeholder for the user number (USERNUM)
-Data  0                          ; Placeholder for closest number (CLOSEST)
+Data    65535                 ; Initial high value for minimum difference
+Data    20                    ; Total count of numbers
+Data    0                     ; Placeholder for user input (TARGET)
+Data    0                     ; Placeholder for closest number (CLOSEST)
+NUMBERS: .BLOCK 20            ; Reserve space for storing 20 numbers
 
-; Number Inputs (to be entered from keyboard)
-NUMBERS: .BLOCK 40               ; Space for 20 numbers (20 * 2 bytes = 40 bytes)
+; Start of Program
+LDX     1, NUMBERS            ; Load base address of NUMBERS array into IXR1
+CLR     R0                    ; Clear R0 (used as a loop counter)
 
-; Start Program
-LDX  1, NUMBERS                  ; Load the base address of NUMBERS array into IXR1
-LDA  0, 0                        ; Initialize GPR0 (loop counter)
-
+; Read 20 numbers and store them in NUMBERS array
 READ_LOOP:
-    IN 0, 1                      ; Read number from user into GPR0
-    STR 0, 0(1)                  ; Store the number in the NUMBERS array
-    INC 1                        ; Move IXR1 to the next memory location
-    INC 0                        ; Increment loop counter (R0)
-    CMP 0, 20                    ; Compare the loop counter with 20
-    JZ  FIND_CLOSEST             ; If all numbers are read, jump to FIND_CLOSEST
-    JMP READ_LOOP                ; Otherwise, continue reading numbers
+    IN      0, 0              ; Read integer from the console into R0
+    STR     0, 0(1)           ; Store R0 in memory location pointed to by IXR1
+    INC     1                 ; Move to the next address in the NUMBERS array
+    AIR     0, 1              ; Increment loop counter in R0 by 1
+    JZ      0, FIND_CLOSEST   ; If R0 = 20, jump to FIND_CLOSEST
+    JMP     READ_LOOP         ; Repeat reading process until 20 numbers are read
 
+; Request target number from the user
 FIND_CLOSEST:
-    IN 1, 0                      ; Read the target number (USERNUM) into GPR1
-    STR 1, 102                   ; Store the input number in memory
+    IN      1, 0              ; Read the target number into R1 (TARGET)
+    STR     1, 103            ; Store the target number in memory location 103 (TARGET)
 
-    ; Initialize closest search
-    LDX 1, NUMBERS               ; Reload the base address of NUMBERS into IXR1
-    LDR 2, 0(1)                  ; Load the first number into GPR2
-    SUB 3, 2, 1                  ; Calculate difference (number - user input)
-    ABS 3                        ; Get absolute difference
-    STR 3, 100                   ; Store difference in memory
-    STR 2, 103                   ; Assume first number is closest
+; Initialize closest search
+    LDX     1, NUMBERS        ; Reload base address of NUMBERS into IXR1
+    LDR     2, 0(1)           ; Load the first number into R2
+    SMR     2, 1              ; Calculate the difference between number and target (R1 - R2)
+    STR     2, 100            ; Store this difference as the minimum difference
+    STR     2, 104            ; Assume first number is closest
 
-    LDA 0, 1                     ; Set loop counter to 1 (second number)
-    
+; Main Search Loop
 SEARCH_LOOP:
-    INC 1                        ; Move IXR1 to the next number
-    LDR 2, 0(1)                  ; Load the next number into GPR2
-    SUB 3, 2, 1                  ; Calculate difference (number - user input)
-    ABS 3                        ; Get absolute difference
-    LDR 4, 100                   ; Load the current minimum difference
-    CMP 3, 4                     ; Compare current difference with minimum difference
-    JGE SKIP_UPDATE              ; If greater or equal, skip updating
-    STR 3, 100                   ; Update minimum difference
-    STR 2, 103                   ; Update closest number
+    INC     1                 ; Move IXR1 to the next number in NUMBERS
+    LDR     2, 0(1)           ; Load the next number into R2
+    SMR     2, 1              ; Calculate the difference between current number and target
+    LDR     4, 100            ; Load the minimum difference into R4 for comparison
+    JGE     SKIP_UPDATE       ; Skip if the new difference is not less than the minimum
+
+    STR     2, 100            ; Update minimum difference
+    STR     2, 104            ; Update closest number
 
 SKIP_UPDATE:
-    INC 0                        ; Increment loop counter
-    CMP 0, 20                    ; Compare loop counter with 20
-    JZ  PRINT_CLOSEST            ; If all 20 numbers are checked, jump to PRINT_CLOSEST
-    JMP SEARCH_LOOP              ; Otherwise, continue searching
+    AIR     0, 1              ; Increment loop counter
+    JZ      0, PRINT_RESULTS  ; Jump to print if 20 numbers are checked
+    JMP     SEARCH_LOOP       ; Continue to the next number
 
-PRINT_CLOSEST:
-    OUT 102                      ; Print the user input
-    OUT 103                      ; Print the closest number
-    HLT                          ; Stop the program
+; Print the target and closest number
+PRINT_RESULTS:
+    OUT     103               ; Print the target number
+    OUT     104               ; Print the closest number
+    HLT                       ; Halt the program
+
 
